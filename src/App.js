@@ -1,6 +1,6 @@
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import app from './firebase.init';
 import { Button, Form } from 'react-bootstrap';
 import { useState } from 'react';
@@ -13,6 +13,7 @@ function App() {
   const [pass, setPass] = useState('')
   const [error, setError] = useState('')
   const [validated, setValidated] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
 
   const handleEmailBlur = e => {
@@ -38,21 +39,38 @@ function App() {
     setValidated(true);
     setError('')
 
-
-    createUserWithEmailAndPassword(auth, email, pass)
-      .then((userCredential) => {
-        const user = userCredential.user
-        console.log(user)
-      })
-      .catch(error => {
-        console.error(error)
-      })
+    if (registered) {
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(result => {
+          console.log(result.user)
+        })
+        .catch(error => {
+          console.error(error);
+          setError(error.message)
+        })
+    }
+    else {
+      createUserWithEmailAndPassword(auth, email, pass)
+        .then((userCredential) => {
+          const user = userCredential.user
+          console.log(user)
+          setEmail('')
+          setPass('')
+        })
+        .catch(error => {
+          console.error(error)
+          setError(error.message)
+        })
+    }
+  }
+  const handleRegistered = event => {
+    setRegistered(event.target.checked)
   }
 
   return (
     <div>
       <div className="register w-50 mx-auto">
-        <h2 className="text-primary my-3">Register Now!!!</h2>
+        <h2 className="text-primary my-3">{registered ? 'LogIn' : "Register"} Now!!!</h2>
         <Form noValidate validated={validated} onSubmit={handleFormSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">
             <Form.Label>Email address</Form.Label>
@@ -72,9 +90,12 @@ function App() {
               Please provide a valid Password.
             </Form.Control.Feedback>
           </Form.Group>
+          <Form.Group className="mb-3" controlId="formBasicCheckbox">
+            <Form.Check onChange={handleRegistered} type="checkbox" label="Already Registered?" />
+          </Form.Group>
           <p className="text-danger">{error}</p>
           <Button variant="primary" type="submit">
-            Register
+            {registered ? 'LogIn' : "Register"}
           </Button>
         </Form>
       </div>
